@@ -69,12 +69,14 @@ See `configs/` for the deployment templates.
 ## 🗺 Future Roadmap
 - [x] Phase 1: Foundational logging and error handling sequences.
 - [x] Phase 2: Complete Customer Onboarding VETO Flow & Data Services Server (DSS).
-- [ ] Phase 3: Integrate with OpenTelemetry for tracing.
+- [x] Phase 3: Complex Order Processing Orchestration (Saga, Wire Tap, CBR).
 - [ ] Phase 4: Implement AMQP/Kafka eventing.
 
 ## 📚 API & Flow Documentation
-- [OpenAPI Specification](docs/apis/customer-api-openapi.yaml)
+- [Customer API Specification](docs/apis/customer-api-openapi.yaml)
 - [Customer Onboarding Sequence Diagram](docs/architecture/customer_onboarding_flow.md)
+- [Order API Specification](docs/apis/order-api-openapi.yaml)
+- [Order Processing Orchestration Diagram](docs/architecture/order_processing_flow.md)
 
 ## 📄 License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
