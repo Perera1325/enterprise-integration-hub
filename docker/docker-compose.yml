@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  micro-integrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        - ENV=dev
+    container_name: wso2-mi-hub
+    ports:
+      - "8290:8290" # HTTP Pass-through
+      - "8253:8253" # HTTPS Pass-through
+      - "9164:9164" # Prometheus metrics
+    environment:
+      # Injecting environment variables referenced in deployment.toml
+      - SYSTEM_DB_URL=jdbc:postgresql://postgres-db:5432/wso2_hub
+      - SYSTEM_DB_USER=wso2user
+      - SYSTEM_DB_PASSWORD=wso2securepassword
+      - JAVA_OPTS=-Xms512m -Xmx1024m
+    volumes:
+      - ./logs:/home/wso2carbon/wso2mi-4.2.0/repository/logs
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - integration_net
+
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: integration_db
+    environment:
+      - POSTGRES_USER=wso2user
+      - POSTGRES_PASSWORD=wso2securepassword
+      - POSTGRES_DB=wso2_hub
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wso2user -d wso2_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - integration_net
+
+volumes:
+  pgdata:
+
+networks:
+  integration_net:
+    driver: bridge
