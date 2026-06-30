@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<endpoint name="ExternalCRMEndpoint" xmlns="http://ws.apache.org/ns/synapse">
+    <http method="post" uri-template="https://api.mockcrm.enterprise.com/v1/customers">
+        <suspendOnFailure>
+            <errorCodes>101503,101504,101505,101507,101508</errorCodes>
+            <initialDuration>5000</initialDuration>
+            <progressionFactor>2.0</progressionFactor>
+            <maximumDuration>60000</maximumDuration>
+        </suspendOnFailure>
+        <markForSuspension>
+            <errorCodes>101503,101504,101505,101507,101508</errorCodes>
+            <retriesBeforeSuspension>3</retriesBeforeSuspension>
+            <retryDelay>2000</retryDelay>
+        </markForSuspension>
+        <!-- Read timeout of 10 seconds -->
+        <timeout>
+            <duration>10000</duration>
+            <responseAction>fault</responseAction>
+        </timeout>
+    </http>
+</endpoint>

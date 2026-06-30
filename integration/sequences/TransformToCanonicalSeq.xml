@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="TransformToCanonicalSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Generate a UUID for internal processing -->
+    <property name="InternalCustomerID" expression="get-property('MessageID')" scope="default"/>
+    
+    <!-- Payload Factory to create Canonical Representation -->
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "CanonicalCustomer": {
+                    "id": "$1",
+                    "profile": {
+                        "firstName": "$2",
+                        "lastName": "$3",
+                        "email": "$4",
+                        "phone": "$5"
+                    },
+                    "demographics": {
+                        "dob": "$6",
+                        "countryCode": "$7"
+                    },
+                    "status": "PENDING_CRM"
+                }
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalCustomerID"/>
+            <arg evaluator="xml" expression="$ctx:ReqFirstName"/>
+            <arg evaluator="xml" expression="$ctx:ReqLastName"/>
+            <arg evaluator="xml" expression="$ctx:ReqEmail"/>
+            <arg evaluator="xml" expression="json-eval($.phone)"/>
+            <arg evaluator="xml" expression="$ctx:ReqDateOfBirth"/>
+            <arg evaluator="xml" expression="json-eval($.country)"/>
+        </args>
+    </payloadFactory>
+</sequence>

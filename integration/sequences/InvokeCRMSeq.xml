@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="InvokeCRMSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Format payload for CRM -->
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "externalId": "$1",
+                "name": "$2",
+                "contactEmail": "$3"
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalCustomerID"/>
+            <arg evaluator="xml" expression="concat($ctx:ReqFirstName, ' ', $ctx:ReqLastName)"/>
+            <arg evaluator="xml" expression="$ctx:ReqEmail"/>
+        </args>
+    </payloadFactory>
+    
+    <!-- Add CRM Auth Headers (Placeholder) -->
+    <property name="Authorization" value="Bearer MOCK_TOKEN" scope="transport"/>
+    
+    <call>
+        <endpoint key="ExternalCRMEndpoint"/>
+    </call>
+    
+    <!-- Analyze CRM Response (e.g., 201 Created vs 500) -->
+    <filter xpath="get-property('axis2', 'HTTP_SC') != 201 and get-property('axis2', 'HTTP_SC') != 200">
+        <then>
+            <!-- Handle CRM Failure gracefully without failing onboarding -->
+            <log level="custom">
+                <property name="Warning" value="CRM Invocation Failed, but local DB persisted."/>
+            </log>
+        </then>
+    </filter>
+</sequence>

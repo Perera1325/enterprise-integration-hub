@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PersistCustomerSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Check duplicates first -->
+    <!-- (Mock logic: Assuming we call FindCustomerDuplicatesOp from DSS) -->
+    
+    <!-- Map canonical payload to DSS Input -->
+    <payloadFactory media-type="xml">
+        <format>
+            <p:CreateCustomerOp xmlns:p="http://ws.wso2.org/dataservice">
+                <p:id>$1</p:id>
+                <p:first_name>$2</p:first_name>
+                <p:last_name>$3</p:last_name>
+                <p:email>$4</p:email>
+                <p:phone>$5</p:phone>
+                <p:dob>$6</p:dob>
+                <p:country_code>$7</p:country_code>
+            </p:CreateCustomerOp>
+        </format>
+        <args>
+            <arg evaluator="json" expression="$.CanonicalCustomer.id"/>
+            <arg evaluator="json" expression="$.CanonicalCustomer.profile.firstName"/>
+            <arg evaluator="json" expression="$.CanonicalCustomer.profile.lastName"/>
+            <arg evaluator="json" expression="$.CanonicalCustomer.profile.email"/>
+            <arg evaluator="json" expression="$.CanonicalCustomer.profile.phone"/>
+            <arg evaluator="json" expression="$.CanonicalCustomer.demographics.dob"/>
+            <arg evaluator="json" expression="$.CanonicalCustomer.demographics.countryCode"/>
+        </args>
+    </payloadFactory>
+
+    <!-- Call Local Data Service -->
+    <!-- In real life, we might use Call mediator to localhost or the direct DSS HTTP endpoint -->
+    <call>
+        <endpoint>
+            <http method="POST" uri-template="http://localhost:8290/services/CustomerDataService"/>
+        </endpoint>
+    </call>
+</sequence>
