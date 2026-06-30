@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/v1/orders" name="OrderProcessingAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/">
+        <inSequence>
+            <!-- 1. Trace Initialization -->
+            <sequence key="GlobalLogSequence"/>
+            
+            <!-- 2. Async Audit Wire Tap (Request Received) -->
+            <clone>
+                <target sequence="OrderAuditWireTapSeq"/>
+                <target>
+                    <sequence>
+                        <!-- 3. Validation & Business Logic -->
+                        <sequence key="ValidateOrderPayloadSeq"/>
+                        
+                        <!-- 4. Transformation to Canonical Order Model -->
+                        <sequence key="TransformToOrderCanonicalSeq"/>
+                        
+                        <!-- 5. Validate Customer Exists -->
+                        <sequence key="VerifyCustomerSeq"/>
+                        
+                        <!-- 6. Reserve Inventory -->
+                        <sequence key="ReserveInventorySeq"/>
+                        
+                        <!-- 7. Process Payment (Content-Based Routing) -->
+                        <sequence key="ProcessPaymentSeq"/>
+                        
+                        <!-- 8. Generate Order (DB) -->
+                        <sequence key="GenerateOrderSeq"/>
+                        
+                        <!-- 9. Create Shipment (with Compensation if failed) -->
+                        <sequence key="CreateShipmentSeq"/>
+                        
+                        <!-- 10. Async Notification Wire Tap -->
+                        <clone>
+                            <target sequence="SendOrderNotificationSeq"/>
+                            <target>
+                                <sequence>
+                                    <!-- 11. Final Response -->
+                                    <payloadFactory media-type="json">
+                                        <format>
+                                            {
+                                                "orderId": "$1",
+                                                "status": "COMPLETED",
+                                                "message": "Order processed successfully."
+                                            }
+                                        </format>
+                                        <args>
+                                            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+                                        </args>
+                                    </payloadFactory>
+                                    <property name="HTTP_SC" scope="axis2" type="STRING" value="201"/>
+                                    <respond/>
+                                </sequence>
+                            </target>
+                        </clone>
+                    </sequence>
+                </target>
+            </clone>
+        </inSequence>
+        <outSequence>
+            <send/>
+        </outSequence>
+        <faultSequence>
+            <!-- Localized fault handler for the overall API -->
+            <sequence key="OrderFaultSeq"/>
+        </faultSequence>
+    </resource>
+</api>

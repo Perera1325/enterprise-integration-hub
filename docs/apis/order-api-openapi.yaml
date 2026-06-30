@@ -1,0 +1,57 @@
+openapi: 3.0.1
+info:
+  title: Order Processing API
+  description: Enterprise API for order processing orchestration across multiple backends.
+  version: 1.0.0
+servers:
+  - url: https://api.integration.enterprise.com/v1
+paths:
+  /orders:
+    post:
+      summary: Place a new order
+      description: Orchestrates inventory reservation, payment, shipping, and notification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+        '400':
+          description: Validation Error
+        '409':
+          description: Conflict (e.g. out of stock)
+        '500':
+          description: Internal Server Error (e.g. failed shipping)
+components:
+  schemas:
+    OrderRequest:
+      type: object
+      required:
+        - customerId
+        - items
+        - paymentDetails
+      properties:
+        customerId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+              quantity:
+                type: integer
+        paymentDetails:
+          type: object
+          properties:
+            method:
+              type: string
+              enum: [CREDIT_CARD, PAYPAL]
+            amount:
+              type: number
+            token:
+              type: string
