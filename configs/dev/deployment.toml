@@ -1,0 +1,23 @@
+[server]
+hostname = "localhost"
+node_ip = "127.0.0.1"
+
+# DEVELOPMENT Data Source Configuration (Injected via ENV)
+[[data_source]]
+id = "WSO2_HUB_DB"
+url = "$SYSTEM:SYSTEM_DB_URL"
+username = "$SYSTEM:SYSTEM_DB_USER"
+password = "$SYSTEM:SYSTEM_DB_PASSWORD"
+driver = "org.postgresql.Driver"
+
+[keystore.tls]
+file_name = "wso2carbon.jks"
+type = "JKS"
+password = "wso2carbon"
+alias = "wso2carbon"
+key_password = "wso2carbon"
+
+# DEVELOPMENT: DEBUG Level for wire logs
+[logger.synapse_wire]
+level = "DEBUG"
+name = "org.apache.synapse.transport.http.wire"

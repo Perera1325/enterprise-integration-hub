@@ -1,0 +1,26 @@
+[server]
+hostname = "api.integration.enterprise.com"
+node_ip = "$SYSTEM:POD_IP"
+
+# PRODUCTION Data Source Configuration (K8s Secrets injected)
+[[data_source]]
+id = "WSO2_HUB_DB"
+url = "$SYSTEM:SYSTEM_DB_URL"
+username = "$SYSTEM:SYSTEM_DB_USER"
+password = "$SYSTEM:SYSTEM_DB_PASSWORD"
+driver = "org.postgresql.Driver"
+pool_options.maxActive = 100
+pool_options.minIdle = 10
+pool_options.maxWait = 60000
+
+[keystore.tls]
+file_name = "prod-tls.jks"
+type = "JKS"
+password = "$SYSTEM:KEYSTORE_PASSWORD"
+alias = "prod-cert"
+key_password = "$SYSTEM:KEYSTORE_PASSWORD"
+
+# PRODUCTION: ERROR Level for performance
+[logger.synapse_wire]
+level = "ERROR"
+name = "org.apache.synapse.transport.http.wire"
