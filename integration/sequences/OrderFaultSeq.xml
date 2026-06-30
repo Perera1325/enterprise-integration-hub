@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="OrderFaultSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="event" value="ORDER_PROCESSING_FAILED"/>
+        <property name="correlationId" expression="$ctx:CorrelationID"/>
+        <property name="errorCode" expression="$ctx:ERROR_CODE"/>
+        <property name="errorMessage" expression="$ctx:ERROR_MESSAGE"/>
+    </log>
+
+    <!-- Map localized errors to Global JSON Fault Sequence -->
+    <sequence key="fault"/>
+</sequence>

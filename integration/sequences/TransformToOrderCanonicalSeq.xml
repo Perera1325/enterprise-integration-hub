@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="TransformToOrderCanonicalSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Generate Internal Order ID -->
+    <property name="InternalOrderID" expression="get-property('MessageID')" scope="default"/>
+    
+    <!-- Translate to Canonical Order Model -->
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "CanonicalOrder": {
+                    "orderId": "$1",
+                    "customerId": "$2",
+                    "status": "PROCESSING",
+                    "payment": {
+                        "method": "$3",
+                        "amount": $4
+                    }
+                }
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+            <arg evaluator="xml" expression="$ctx:ReqCustomerId"/>
+            <arg evaluator="xml" expression="$ctx:ReqPaymentMethod"/>
+            <arg evaluator="xml" expression="$ctx:ReqPaymentAmount"/>
+        </args>
+    </payloadFactory>
+</sequence>

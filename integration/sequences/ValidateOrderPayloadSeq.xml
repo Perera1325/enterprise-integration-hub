@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="ValidateOrderPayloadSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Check if customerId is present -->
+    <property name="ReqCustomerId" expression="json-eval($.customerId)" scope="default"/>
+    <property name="ReqPaymentMethod" expression="json-eval($.paymentDetails.method)" scope="default"/>
+    <property name="ReqPaymentAmount" expression="json-eval($.paymentDetails.amount)" scope="default"/>
+
+    <filter xpath="string-length($ctx:ReqCustomerId) = 0 or string-length($ctx:ReqPaymentMethod) = 0">
+        <then>
+            <property name="ERROR_CODE" value="40001"/>
+            <property name="ERROR_MESSAGE" value="Bad Request"/>
+            <property name="ERROR_DETAIL" value="Missing required order fields."/>
+            <sequence key="OrderFaultSeq"/>
+            <drop/>
+        </then>
+    </filter>
+</sequence>
