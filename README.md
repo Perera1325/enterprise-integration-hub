@@ -67,13 +67,14 @@ Secrets must **never** be hardcoded. They are expected to be injected via Kubern
 See `configs/` for the deployment templates.
 
 ## 🗺 Future Roadmap
-- [ ] Implement foundational logging and error handling sequences.
-- [ ] Build core orchestration proxies.
-- [ ] Integrate with OpenTelemetry for tracing.
-- [ ] Add extensive API test suites.
+- [x] Phase 1: Foundational logging and error handling sequences.
+- [x] Phase 2: Complete Customer Onboarding VETO Flow & Data Services Server (DSS).
+- [ ] Phase 3: Integrate with OpenTelemetry for tracing.
+- [ ] Phase 4: Implement AMQP/Kafka eventing.
 
-## 📚 API Documentation
-![API Docs Placeholder](docs/apis/swagger-ui.png)
+## 📚 API & Flow Documentation
+- [OpenAPI Specification](docs/apis/customer-api-openapi.yaml)
+- [Customer Onboarding Sequence Diagram](docs/architecture/customer_onboarding_flow.md)
 
 ## 📄 License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
