@@ -1,0 +1,53 @@
+<data name="CustomerDataService" serviceGroup="CustomerDataService" baseURI="http://ws.wso2.org/dataservice">
+    <description>Enterprise Data Service for Customer Persistence</description>
+    
+    <config id="WSO2_HUB_DB">
+        <property name="driverClassName">org.postgresql.Driver</property>
+        <property name="url">$SYSTEM:SYSTEM_DB_URL</property>
+        <property name="username">$SYSTEM:SYSTEM_DB_USER</property>
+        <property name="password">$SYSTEM:SYSTEM_DB_PASSWORD</property>
+    </config>
+
+    <!-- Create Customer Query -->
+    <query id="CreateCustomerQuery" useConfig="WSO2_HUB_DB">
+        <sql>INSERT INTO customers (id, first_name, last_name, email, phone, dob, country_code, status) VALUES (:id, :first_name, :last_name, :email, :phone, :dob, :country_code, 'ACTIVE')</sql>
+        <param name="id" paramType="SCALAR" sqlType="STRING"/>
+        <param name="first_name" paramType="SCALAR" sqlType="STRING"/>
+        <param name="last_name" paramType="SCALAR" sqlType="STRING"/>
+        <param name="email" paramType="SCALAR" sqlType="STRING"/>
+        <param name="phone" paramType="SCALAR" sqlType="STRING"/>
+        <param name="dob" paramType="SCALAR" sqlType="STRING"/>
+        <param name="country_code" paramType="SCALAR" sqlType="STRING"/>
+    </query>
+
+    <!-- Find Duplicate by Email or Phone -->
+    <query id="FindCustomerDuplicatesQuery" useConfig="WSO2_HUB_DB">
+        <sql>SELECT count(id) as duplicate_count FROM customers WHERE email = :email OR phone = :phone</sql>
+        <param name="email" paramType="SCALAR" sqlType="STRING"/>
+        <param name="phone" paramType="SCALAR" sqlType="STRING"/>
+        <result element="Customers" rowName="Customer">
+            <element column="duplicate_count" name="duplicate_count" xsdType="integer"/>
+        </result>
+    </query>
+
+    <!-- Operation to Create Customer -->
+    <operation name="CreateCustomerOp">
+        <call-query href="CreateCustomerQuery">
+            <with-param name="id" query-param="id"/>
+            <with-param name="first_name" query-param="first_name"/>
+            <with-param name="last_name" query-param="last_name"/>
+            <with-param name="email" query-param="email"/>
+            <with-param name="phone" query-param="phone"/>
+            <with-param name="dob" query-param="dob"/>
+            <with-param name="country_code" query-param="country_code"/>
+        </call-query>
+    </operation>
+
+    <!-- Operation to Find Duplicates -->
+    <operation name="FindCustomerDuplicatesOp">
+        <call-query href="FindCustomerDuplicatesQuery">
+            <with-param name="email" query-param="email"/>
+            <with-param name="phone" query-param="phone"/>
+        </call-query>
+    </operation>
+</data>
