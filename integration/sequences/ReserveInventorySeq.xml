@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="ReserveInventorySeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Format Request for Inventory -->
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "orderId": "$1",
+                "items": $2
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+            <arg evaluator="json" expression="$.items"/>
+        </args>
+    </payloadFactory>
+    
+    <call>
+        <endpoint key="InventoryEndpoint"/>
+    </call>
+    
+    <filter xpath="get-property('axis2', 'HTTP_SC') != 200 and get-property('axis2', 'HTTP_SC') != 201">
+        <then>
+            <property name="ERROR_CODE" value="40901"/>
+            <property name="ERROR_MESSAGE" value="Conflict"/>
+            <property name="ERROR_DETAIL" value="Inventory reservation failed. Stock may be unavailable."/>
+            <sequence key="OrderFaultSeq"/>
+            <drop/>
+        </then>
+    </filter>
+</sequence>

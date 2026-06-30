@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="VerifyCustomerSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Mock check: In reality, this would invoke the Customer API or DSS -->
+    <filter xpath="get-property('ReqCustomerId') = 'CUST-0000'">
+        <then>
+            <property name="ERROR_CODE" value="40401"/>
+            <property name="ERROR_MESSAGE" value="Not Found"/>
+            <property name="ERROR_DETAIL" value="Customer does not exist."/>
+            <sequence key="OrderFaultSeq"/>
+            <drop/>
+        </then>
+    </filter>
+</sequence>

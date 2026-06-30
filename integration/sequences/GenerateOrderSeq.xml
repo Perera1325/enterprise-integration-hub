@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="GenerateOrderSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Format for internal Order Database via DSS -->
+    <log level="custom">
+        <property name="info" value="Order successfully saved to database."/>
+    </log>
+</sequence>

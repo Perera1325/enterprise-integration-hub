@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="CreateShipmentSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "orderRef": "$1",
+                "customerId": "$2"
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+            <arg evaluator="xml" expression="$ctx:ReqCustomerId"/>
+        </args>
+    </payloadFactory>
+    
+    <call>
+        <endpoint key="ShippingEndpoint"/>
+    </call>
+    
+    <!-- If Shipping fails, trigger Payment and Inventory compensation -->
+    <filter xpath="get-property('axis2', 'HTTP_SC') != 200 and get-property('axis2', 'HTTP_SC') != 201">
+        <then>
+            <property name="ERROR_CODE" value="50202"/>
+            <property name="ERROR_MESSAGE" value="Bad Gateway"/>
+            <property name="ERROR_DETAIL" value="Shipping provider unavailable. Order rolled back."/>
+            
+            <!-- Saga Compensation -->
+            <sequence key="PaymentCompensationSeq"/>
+            <sequence key="InventoryCompensationSeq"/>
+            
+            <sequence key="OrderFaultSeq"/>
+            <drop/>
+        </then>
+    </filter>
+</sequence>

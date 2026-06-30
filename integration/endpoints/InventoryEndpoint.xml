@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<endpoint name="InventoryEndpoint" xmlns="http://ws.apache.org/ns/synapse">
+    <http method="post" uri-template="https://api.inventory.enterprise.com/v1/reserve">
+        <suspendOnFailure>
+            <errorCodes>101503,101504,101505,101507,101508</errorCodes>
+            <initialDuration>5000</initialDuration>
+            <progressionFactor>2.0</progressionFactor>
+            <maximumDuration>60000</maximumDuration>
+        </suspendOnFailure>
+        <timeout>
+            <duration>5000</duration>
+            <responseAction>fault</responseAction>
+        </timeout>
+    </http>
+</endpoint>

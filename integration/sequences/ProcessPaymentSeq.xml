@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="ProcessPaymentSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Enterprise Integration Pattern: Content-Based Router -->
+    <switch source="get-property('ReqPaymentMethod')">
+        <case regex="CREDIT_CARD">
+            <payloadFactory media-type="json">
+                <format>
+                    {
+                        "transactionId": "$1",
+                        "gateway": "STRIPE",
+                        "amount": $2,
+                        "currency": "USD"
+                    }
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+                    <arg evaluator="xml" expression="$ctx:ReqPaymentAmount"/>
+                </args>
+            </payloadFactory>
+        </case>
+        <case regex="PAYPAL">
+            <payloadFactory media-type="json">
+                <format>
+                    {
+                        "referenceId": "$1",
+                        "gateway": "PAYPAL",
+                        "total": $2,
+                        "currency": "USD"
+                    }
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+                    <arg evaluator="xml" expression="$ctx:ReqPaymentAmount"/>
+                </args>
+            </payloadFactory>
+        </case>
+        <default>
+            <property name="ERROR_CODE" value="40003"/>
+            <property name="ERROR_MESSAGE" value="Bad Request"/>
+            <property name="ERROR_DETAIL" value="Unsupported Payment Method"/>
+            <!-- Since inventory was reserved, we must compensate before dropping -->
+            <sequence key="InventoryCompensationSeq"/>
+            <sequence key="OrderFaultSeq"/>
+            <drop/>
+        </default>
+    </switch>
+    
+    <call>
+        <endpoint key="PaymentEndpoint"/>
+    </call>
+    
+    <!-- If payment fails, trigger inventory compensation -->
+    <filter xpath="get-property('axis2', 'HTTP_SC') != 200">
+        <then>
+            <property name="ERROR_CODE" value="50201"/>
+            <property name="ERROR_MESSAGE" value="Bad Gateway"/>
+            <property name="ERROR_DETAIL" value="Payment Gateway rejected the transaction."/>
+            <sequence key="InventoryCompensationSeq"/>
+            <sequence key="OrderFaultSeq"/>
+            <drop/>
+        </then>
+    </filter>
+</sequence>
