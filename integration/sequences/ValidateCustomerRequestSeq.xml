@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="ValidateCustomerRequestSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Extract properties from JSON payload -->
+    <property name="ReqFirstName" expression="json-eval($.firstName)" scope="default"/>
+    <property name="ReqLastName" expression="json-eval($.lastName)" scope="default"/>
+    <property name="ReqEmail" expression="json-eval($.email)" scope="default"/>
+    <property name="ReqDateOfBirth" expression="json-eval($.dateOfBirth)" scope="default"/>
+
+    <!-- Validate Required Fields -->
+    <filter xpath="string-length($ctx:ReqFirstName) = 0 or string-length($ctx:ReqLastName) = 0 or string-length($ctx:ReqEmail) = 0">
+        <then>
+            <!-- Field Missing: Set error details and trigger fault sequence -->
+            <property name="ERROR_CODE" value="40001"/>
+            <property name="ERROR_MESSAGE" value="Bad Request"/>
+            <property name="ERROR_DETAIL" value="Missing required fields: firstName, lastName, or email"/>
+            <property name="ErrorCategory" value="Validation Error"/>
+            <sequence key="CustomerFaultSeq"/>
+            <drop/>
+        </then>
+    </filter>
+    
+    <!-- Validate Email Format (Basic Regex) -->
+    <filter source="get-property('ReqEmail')" regex="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+        <then>
+            <!-- Valid Email -->
+        </then>
+        <else>
+            <property name="ERROR_CODE" value="40002"/>
+            <property name="ERROR_MESSAGE" value="Bad Request"/>
+            <property name="ERROR_DETAIL" value="Invalid email format"/>
+            <property name="ErrorCategory" value="Validation Error"/>
+            <sequence key="CustomerFaultSeq"/>
+            <drop/>
+        </else>
+    </filter>
+</sequence>
