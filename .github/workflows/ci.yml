@@ -13,6 +13,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Install xmllint
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
       - name: Validate XML Syntax
         run: |
           find integration -name "*.xml" -type f -exec xmllint --noout {} +
