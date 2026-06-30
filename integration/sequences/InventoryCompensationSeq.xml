@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="InventoryCompensationSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Saga Pattern: Release Reserved Inventory -->
+    <log level="custom">
+        <property name="Compensation" value="Triggering Inventory Release..."/>
+        <property name="orderId" expression="$ctx:InternalOrderID"/>
+    </log>
+    
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "orderId": "$1",
+                "action": "RELEASE"
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+        </args>
+    </payloadFactory>
+    
+    <call>
+        <!-- Mock endpoint call for inventory release -->
+        <endpoint>
+            <http method="post" uri-template="https://api.inventory.enterprise.com/v1/release"/>
+        </endpoint>
+    </call>
+</sequence>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="PaymentCompensationSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Saga Pattern: Void/Refund Processed Payment -->
+    <log level="custom">
+        <property name="Compensation" value="Triggering Payment Refund..."/>
+        <property name="orderId" expression="$ctx:InternalOrderID"/>
+    </log>
+    
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "transactionId": "$1",
+                "action": "VOID"
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+        </args>
+    </payloadFactory>
+    
+    <call>
+        <!-- Mock endpoint call for payment refund -->
+        <endpoint>
+            <http method="post" uri-template="https://api.payment.enterprise.com/v1/void"/>
+        </endpoint>
+    </call>
+</sequence>
