@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="GlobalLogSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Generate a Correlation ID if it does not exist -->
+    <filter source="boolean(get-property('transport', 'X-Correlation-ID'))" regex="false">
+        <then>
+            <property name="CorrelationID" expression="get-property('MessageID')" scope="default"/>
+        </then>
+        <else>
+            <property name="CorrelationID" expression="get-property('transport', 'X-Correlation-ID')" scope="default"/>
+        </else>
+    </filter>
+    
+    <!-- Structured JSON Log Output -->
+    <!-- In WSO2 MI, log4j2 will be configured to format this into pure JSON -->
+    <log level="custom">
+        <property name="event" value="API_INVOCATION"/>
+        <property name="correlationId" expression="$ctx:CorrelationID"/>
+        <property name="apiName" expression="$ctx:SYNAPSE_REST_API"/>
+        <property name="method" expression="get-property('axis2', 'HTTP_METHOD')"/>
+        <property name="path" expression="get-property('axis2', 'REST_URL_POSTFIX')"/>
+        <property name="clientIp" expression="get-property('axis2', 'REMOTE_ADDR')"/>
+    </log>
+</sequence>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="fault" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Log the error using the global log sequence -->
+    <log level="custom">
+        <property name="Type" value="ERROR"/>
+        <property name="ERROR_CODE" expression="$ctx:ERROR_CODE"/>
+        <property name="ERROR_MESSAGE" expression="$ctx:ERROR_MESSAGE"/>
+        <property name="ERROR_DETAIL" expression="$ctx:ERROR_DETAIL"/>
+        <property name="ERROR_EXCEPTION" expression="$ctx:ERROR_EXCEPTION"/>
+    </log>
+    
+    <!-- Categorize the Error Code and Set HTTP Status -->
+    <filter regex="101503|101504|101505|101507|101508" source="get-property('ERROR_CODE')">
+        <then>
+            <!-- Endpoint Timeout / Connection Refused -->
+            <property name="HTTP_SC" value="504" scope="axis2"/>
+            <property name="ErrorCategory" value="Gateway Timeout" scope="default"/>
+        </then>
+        <else>
+            <!-- Default Error -->
+            <property name="HTTP_SC" value="500" scope="axis2"/>
+            <property name="ErrorCategory" value="Internal Server Error" scope="default"/>
+        </else>
+    </filter>
+
+    <!-- Create Standardized JSON Response (RFC 7807 Problem Details style) -->
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "error": {
+                    "code": "$1",
+                    "message": "$2",
+                    "category": "$3",
+                    "timestamp": "$4"
+                }
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:ERROR_CODE"/>
+            <arg evaluator="xml" expression="$ctx:ERROR_MESSAGE"/>
+            <arg evaluator="xml" expression="$ctx:ErrorCategory"/>
+            <arg evaluator="xml" expression="get-property('SYSTEM_TIME')"/>
+        </args>
+    </payloadFactory>
+    
+    <!-- Set Content Type and Respond -->
+    <property name="messageType" value="application/json" scope="axis2"/>
+    <respond/>
+</sequence>
