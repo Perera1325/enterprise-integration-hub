@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="OnboardingAuditLogSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Write a structured audit log showing successful completion of the workflow -->
+    <log level="custom">
+        <property name="event" value="CUSTOMER_ONBOARDING_COMPLETED"/>
+        <property name="correlationId" expression="$ctx:CorrelationID"/>
+        <property name="customerId" expression="$ctx:InternalCustomerID"/>
+        <property name="email" expression="$ctx:ReqEmail"/>
+        <property name="status" value="SUCCESS"/>
+        <property name="processingTimeMs" expression="get-property('SYSTEM_TIME') - get-property('SYNAPSE_REST_API_START_TIME')"/>
+    </log>
+</sequence>

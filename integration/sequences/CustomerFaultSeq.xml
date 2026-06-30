@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="CustomerFaultSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="event" value="CUSTOMER_ONBOARDING_FAILED"/>
+        <property name="correlationId" expression="$ctx:CorrelationID"/>
+        <property name="errorCode" expression="$ctx:ERROR_CODE"/>
+        <property name="errorMessage" expression="$ctx:ERROR_MESSAGE"/>
+    </log>
+
+    <!-- Call Global Fault Sequence to format the final RFC 7807 response -->
+    <sequence key="fault"/>
+</sequence>
