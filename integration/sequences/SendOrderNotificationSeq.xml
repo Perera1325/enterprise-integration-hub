@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="SendOrderNotificationSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Enterprise Integration Pattern: Wire Tap -->
+    <log level="custom">
+        <property name="Notification" value="Preparing to send confirmation email asynchronously"/>
+        <property name="orderId" expression="$ctx:InternalOrderID"/>
+        <property name="customerId" expression="$ctx:ReqCustomerId"/>
+    </log>
+    
+    <payloadFactory media-type="json">
+        <format>
+            {
+                "recipientId": "$1",
+                "templateId": "ORDER_CONFIRMATION",
+                "data": {
+                    "orderId": "$2",
+                    "status": "COMPLETED"
+                }
+            }
+        </format>
+        <args>
+            <arg evaluator="xml" expression="$ctx:ReqCustomerId"/>
+            <arg evaluator="xml" expression="$ctx:InternalOrderID"/>
+        </args>
+    </payloadFactory>
+    
+    <call>
+        <endpoint>
+            <!-- Mock Notification Endpoint -->
+            <http method="post" uri-template="https://api.notification.enterprise.com/v1/send"/>
+        </endpoint>
+    </call>
+</sequence>

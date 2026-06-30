@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="OrderAuditWireTapSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Enterprise Integration Pattern: Wire Tap -->
+    <!-- This sequence executes asynchronously and does not block the main flow -->
+    <log level="custom">
+        <property name="Audit" value="Order Request Received"/>
+        <property name="CorrelationID" expression="$ctx:CorrelationID"/>
+        <property name="Payload" expression="json-eval($)"/>
+    </log>
+    
+    <!-- Optional: Call an Audit Service endpoint here -->
+</sequence>
