@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/v1/customers" name="CustomerOnboardingAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/">
+        <inSequence>
+            <!-- 1. Log incoming request -->
+            <sequence key="GlobalLogSequence"/>
+            
+            <!-- 2. Payload Validation -->
+            <sequence key="ValidateCustomerRequestSeq"/>
+            
+            <!-- 3. Business Rules Validation -->
+            <sequence key="CheckBusinessRulesSeq"/>
+            
+            <!-- 4. Transform to Canonical Data Model -->
+            <sequence key="TransformToCanonicalSeq"/>
+            
+            <!-- 5. Check Duplicates & Persist to DB -->
+            <sequence key="PersistCustomerSeq"/>
+            
+            <!-- 6. Orchestrate External CRM -->
+            <sequence key="InvokeCRMSeq"/>
+            
+            <!-- 7. Audit Logging -->
+            <sequence key="OnboardingAuditLogSeq"/>
+            
+            <!-- 8. Return Standardized Response -->
+            <payloadFactory media-type="json">
+                <format>
+                    {
+                        "customerId": "$1",
+                        "status": "CREATED",
+                        "message": "Customer onboarding successful"
+                    }
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:InternalCustomerID"/>
+                </args>
+            </payloadFactory>
+            <property name="HTTP_SC" scope="axis2" type="STRING" value="201"/>
+            <respond/>
+        </inSequence>
+        <outSequence>
+            <send/>
+        </outSequence>
+        <faultSequence>
+            <sequence key="CustomerFaultSeq"/>
+        </faultSequence>
+    </resource>
+</api>
