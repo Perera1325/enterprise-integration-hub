@@ -70,13 +70,19 @@ See `configs/` for the deployment templates.
 - [x] Phase 1: Foundational logging and error handling sequences.
 - [x] Phase 2: Complete Customer Onboarding VETO Flow & Data Services Server (DSS).
 - [x] Phase 3: Complex Order Processing Orchestration (Saga, Wire Tap, CBR).
-- [ ] Phase 4: Implement AMQP/Kafka eventing.
+- [x] Phase 4: Enterprise Security Architecture & OWASP Top 10 Mitigation.
+- [ ] Phase 5: Implement AMQP/Kafka eventing.
 
 ## 📚 API & Flow Documentation
 - [Customer API Specification](docs/apis/customer-api-openapi.yaml)
 - [Customer Onboarding Sequence Diagram](docs/architecture/customer_onboarding_flow.md)
 - [Order API Specification](docs/apis/order-api-openapi.yaml)
 - [Order Processing Orchestration Diagram](docs/architecture/order_processing_flow.md)
+
+## 🛡️ Security Documentation
+- [Security Architecture](docs/security/01-Security-Architecture.md)
+- [Authentication & Authorization](docs/security/02-Authentication-Authorization.md)
+- [Secrets Management](docs/security/03-Secrets-Management.md)
 
 ## 📄 License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
@@ -85,4 +91,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 Please read `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` for details on our code of conduct and the process for submitting pull requests.
 
 ---
-**Status**: 🚧 Phase 1: Architectural Foundation (Under Construction)
+**Status**: ✅ Phase 4: Enterprise Security Architecture Completed
