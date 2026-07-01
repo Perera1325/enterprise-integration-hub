@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="AuthorizeRequestSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Ensure AuthValidationSeq has run and extracted roles -->
+    <property expression="get-property('JWT_ROLES')" name="UserRoles" scope="default" type="STRING"/>
+    <property expression="get-property('RequiredRole')" name="RequiredRole" scope="default" type="STRING"/>
+    
+    <!-- If a specific RequiredRole is set before calling this sequence, check it -->
+    <filter xpath="string-length($ctx:RequiredRole) > 0">
+        <then>
+            <!-- Check if UserRoles contains RequiredRole (simple string matching for this phase) -->
+            <filter xpath="contains($ctx:UserRoles, $ctx:RequiredRole)">
+                <then>
+                    <!-- Authorized -->
+                </then>
+                <else>
+                    <property name="ERROR_CODE" value="40301" scope="default"/>
+                    <property name="ERROR_MESSAGE" value="Forbidden" scope="default"/>
+                    <property name="ERROR_DETAIL" value="Insufficient privileges to access this resource" scope="default"/>
+                    <property name="ErrorCategory" value="Authorization Error" scope="default"/>
+                    <property name="HTTP_SC" value="403" scope="axis2"/>
+                    <sequence key="GlobalFaultSequence"/>
+                    <drop/>
+                </else>
+            </filter>
+        </then>
+    </filter>
+</sequence>

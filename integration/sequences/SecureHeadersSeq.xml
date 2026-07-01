@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="SecureHeadersSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Inject industry-standard HTTP security headers -->
+    <property name="Strict-Transport-Security" scope="transport" type="STRING" value="max-age=31536000; includeSubDomains; preload"/>
+    <property name="X-Content-Type-Options" scope="transport" type="STRING" value="nosniff"/>
+    <property name="X-Frame-Options" scope="transport" type="STRING" value="DENY"/>
+    <property name="Content-Security-Policy" scope="transport" type="STRING" value="default-src 'none';"/>
+    <property name="X-XSS-Protection" scope="transport" type="STRING" value="1; mode=block"/>
+    <property name="Cache-Control" scope="transport" type="STRING" value="no-store, no-cache, must-revalidate, max-age=0"/>
+    <property name="Pragma" scope="transport" type="STRING" value="no-cache"/>
+</sequence>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="AuthValidationSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- Extract Authorization Header -->
+    <property expression="$trp:Authorization" name="AuthHeader" scope="default" type="STRING"/>
+    
+    <filter xpath="string-length($ctx:AuthHeader) = 0 or not(starts-with($ctx:AuthHeader, 'Bearer '))">
+        <then>
+            <!-- Missing or Invalid Authorization Header -->
+            <property name="ERROR_CODE" value="40101" scope="default"/>
+            <property name="ERROR_MESSAGE" value="Unauthorized" scope="default"/>
+            <property name="ERROR_DETAIL" value="Missing or invalid Bearer token" scope="default"/>
+            <property name="ErrorCategory" value="Authentication Error" scope="default"/>
+            <property name="HTTP_SC" value="401" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </then>
+        <else>
+            <!-- Decode and validate JWT payload -->
+            <!-- Note: In a true production environment, signature validation MUST occur.
+                 This script assumes the API Gateway (or a preceding layer) has verified the signature, 
+                 or we are demonstrating token introspection within MI. -->
+            <script language="js"><![CDATA[
+                var authHeader = mc.getProperty("AuthHeader");
+                var token = authHeader.split(" ")[1];
+                var parts = token.split(".");
+                
+                if (parts.length === 3) {
+                    try {
+                        // Base64 decode payload
+                        var payload = parts[1];
+                        // Replace characters for standard base64 decoding if it's base64url encoded
+                        payload = payload.replace(/-/g, '+').replace(/_/g, '/');
+                        // Use Java to decode since Nashorn/Rhino doesn't have atob built-in
+                        var decodedPayload = new java.lang.String(java.util.Base64.getDecoder().decode(payload));
+                        var jwt = JSON.parse(decodedPayload);
+                        
+                        // Validate Expiration
+                        var currentTime = Math.floor(Date.now() / 1000);
+                        if (jwt.exp && jwt.exp < currentTime) {
+                            mc.setProperty("JWT_EXPIRED", "true");
+                        } else {
+                            // Extract Claims
+                            mc.setProperty("JWT_SUB", jwt.sub || "unknown");
+                            // Extract Roles (Assuming roles is an array in the JWT)
+                            var roles = jwt.roles ? jwt.roles.join(",") : "";
+                            mc.setProperty("JWT_ROLES", roles);
+                            mc.setProperty("JWT_VALID", "true");
+                        }
+                    } catch (e) {
+                        mc.setProperty("JWT_INVALID_FORMAT", "true");
+                    }
+                } else {
+                    mc.setProperty("JWT_INVALID_FORMAT", "true");
+                }
+            ]]></script>
+            
+            <filter regex="true" source="get-property('JWT_EXPIRED')">
+                <then>
+                    <property name="ERROR_CODE" value="40102" scope="default"/>
+                    <property name="ERROR_MESSAGE" value="Unauthorized" scope="default"/>
+                    <property name="ERROR_DETAIL" value="Token has expired" scope="default"/>
+                    <property name="ErrorCategory" value="Authentication Error" scope="default"/>
+                    <property name="HTTP_SC" value="401" scope="axis2"/>
+                    <sequence key="GlobalFaultSequence"/>
+                    <drop/>
+                </then>
+            </filter>
+            
+            <filter regex="true" source="get-property('JWT_INVALID_FORMAT')">
+                <then>
+                    <property name="ERROR_CODE" value="40103" scope="default"/>
+                    <property name="ERROR_MESSAGE" value="Unauthorized" scope="default"/>
+                    <property name="ERROR_DETAIL" value="Invalid token format" scope="default"/>
+                    <property name="ErrorCategory" value="Authentication Error" scope="default"/>
+                    <property name="HTTP_SC" value="401" scope="axis2"/>
+                    <sequence key="GlobalFaultSequence"/>
+                    <drop/>
+                </then>
+            </filter>
+        </else>
+    </filter>
+</sequence>
