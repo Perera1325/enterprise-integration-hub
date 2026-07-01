@@ -1,26 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sequence name="ValidateCustomerRequestSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <!-- 1. Validate Content-Type -->
+    <filter regex=".*application/json.*" source="$trp:Content-Type">
+        <then/>
+        <else>
+            <property name="ERROR_CODE" value="41501"/>
+            <property name="ERROR_MESSAGE" value="Unsupported Media Type"/>
+            <property name="ERROR_DETAIL" value="Only application/json is supported"/>
+            <property name="ErrorCategory" value="Security Error"/>
+            <property name="HTTP_SC" value="415" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </else>
+    </filter>
+
+    <!-- 2. Validate Payload Size (Max ~10KB = 10240 bytes) to prevent DoS -->
+    <property name="PayloadSize" expression="$trp:Content-Length"/>
+    <filter xpath="number($ctx:PayloadSize) > 10240">
+        <then>
+            <property name="ERROR_CODE" value="41301"/>
+            <property name="ERROR_MESSAGE" value="Payload Too Large"/>
+            <property name="ERROR_DETAIL" value="Request entity is larger than limits defined by server"/>
+            <property name="ErrorCategory" value="Security Error"/>
+            <property name="HTTP_SC" value="413" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </then>
+    </filter>
+
     <!-- Extract properties from JSON payload -->
     <property name="ReqFirstName" expression="json-eval($.firstName)" scope="default"/>
     <property name="ReqLastName" expression="json-eval($.lastName)" scope="default"/>
     <property name="ReqEmail" expression="json-eval($.email)" scope="default"/>
     <property name="ReqDateOfBirth" expression="json-eval($.dateOfBirth)" scope="default"/>
 
-    <!-- Validate Required Fields -->
+    <!-- 3. Validate Required Fields & Input Lengths -->
     <filter xpath="string-length($ctx:ReqFirstName) = 0 or string-length($ctx:ReqLastName) = 0 or string-length($ctx:ReqEmail) = 0">
         <then>
-            <!-- Field Missing: Set error details and trigger fault sequence -->
+            <!-- Field Missing -->
             <property name="ERROR_CODE" value="40001"/>
             <property name="ERROR_MESSAGE" value="Bad Request"/>
             <property name="ERROR_DETAIL" value="Missing required fields: firstName, lastName, or email"/>
             <property name="ErrorCategory" value="Validation Error"/>
-            <sequence key="CustomerFaultSeq"/>
+            <property name="HTTP_SC" value="400" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
             <drop/>
         </then>
     </filter>
     
-    <!-- Validate Email Format (Basic Regex) -->
-    <filter source="get-property('ReqEmail')" regex="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+    <!-- 4. Validate String Lengths to prevent Buffer Overflow / Injection -->
+    <filter xpath="string-length($ctx:ReqFirstName) > 50 or string-length($ctx:ReqLastName) > 50 or string-length($ctx:ReqEmail) > 100">
+        <then>
+            <property name="ERROR_CODE" value="40003"/>
+            <property name="ERROR_MESSAGE" value="Bad Request"/>
+            <property name="ERROR_DETAIL" value="Input string length exceeds maximum allowed limit"/>
+            <property name="ErrorCategory" value="Validation Error"/>
+            <property name="HTTP_SC" value="400" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </then>
+    </filter>
+
+    <!-- 5. Validate Email Format (Strict Regex) -->
+    <filter source="get-property('ReqEmail')" regex="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$">
         <then>
             <!-- Valid Email -->
         </then>
@@ -29,7 +71,8 @@
             <property name="ERROR_MESSAGE" value="Bad Request"/>
             <property name="ERROR_DETAIL" value="Invalid email format"/>
             <property name="ErrorCategory" value="Validation Error"/>
-            <sequence key="CustomerFaultSeq"/>
+            <property name="HTTP_SC" value="400" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
             <drop/>
         </else>
     </filter>

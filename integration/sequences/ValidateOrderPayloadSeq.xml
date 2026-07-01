@@ -1,16 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sequence name="ValidateOrderPayloadSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
-    <!-- Check if customerId is present -->
+    <!-- 1. Validate Content-Type -->
+    <filter regex=".*application/json.*" source="$trp:Content-Type">
+        <then/>
+        <else>
+            <property name="ERROR_CODE" value="41501"/>
+            <property name="ERROR_MESSAGE" value="Unsupported Media Type"/>
+            <property name="ERROR_DETAIL" value="Only application/json is supported"/>
+            <property name="ErrorCategory" value="Security Error"/>
+            <property name="HTTP_SC" value="415" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </else>
+    </filter>
+
+    <!-- 2. Validate Payload Size (Max ~5KB = 5120 bytes) -->
+    <property name="PayloadSize" expression="$trp:Content-Length"/>
+    <filter xpath="number($ctx:PayloadSize) > 5120">
+        <then>
+            <property name="ERROR_CODE" value="41301"/>
+            <property name="ERROR_MESSAGE" value="Payload Too Large"/>
+            <property name="ERROR_DETAIL" value="Request entity is larger than limits defined by server"/>
+            <property name="ErrorCategory" value="Security Error"/>
+            <property name="HTTP_SC" value="413" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </then>
+    </filter>
+
+    <!-- Extract Fields -->
     <property name="ReqCustomerId" expression="json-eval($.customerId)" scope="default"/>
     <property name="ReqPaymentMethod" expression="json-eval($.paymentDetails.method)" scope="default"/>
     <property name="ReqPaymentAmount" expression="json-eval($.paymentDetails.amount)" scope="default"/>
 
+    <!-- 3. Validate Required Fields & BOLA Check -->
     <filter xpath="string-length($ctx:ReqCustomerId) = 0 or string-length($ctx:ReqPaymentMethod) = 0">
         <then>
             <property name="ERROR_CODE" value="40001"/>
             <property name="ERROR_MESSAGE" value="Bad Request"/>
             <property name="ERROR_DETAIL" value="Missing required order fields."/>
-            <sequence key="OrderFaultSeq"/>
+            <property name="HTTP_SC" value="400" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </then>
+    </filter>
+    
+    <!-- 4. Validate Numeric Range (Amount > 0) -->
+    <filter xpath="number($ctx:ReqPaymentAmount) &lt;= 0">
+        <then>
+            <property name="ERROR_CODE" value="40004"/>
+            <property name="ERROR_MESSAGE" value="Bad Request"/>
+            <property name="ERROR_DETAIL" value="Payment amount must be greater than zero."/>
+            <property name="HTTP_SC" value="400" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
+            <drop/>
+        </then>
+    </filter>
+
+    <!-- 5. Broken Object Level Authorization (BOLA) Mitigation -->
+    <!-- Ensure the customerId in the payload matches the JWT Subject -->
+    <filter xpath="$ctx:JWT_SUB != 'unknown' and $ctx:ReqCustomerId != $ctx:JWT_SUB">
+        <then>
+            <property name="ERROR_CODE" value="40302"/>
+            <property name="ERROR_MESSAGE" value="Forbidden"/>
+            <property name="ERROR_DETAIL" value="Access to this customer record is denied."/>
+            <property name="ErrorCategory" value="Authorization Error"/>
+            <property name="HTTP_SC" value="403" scope="axis2"/>
+            <sequence key="GlobalFaultSequence"/>
             <drop/>
         </then>
     </filter>
