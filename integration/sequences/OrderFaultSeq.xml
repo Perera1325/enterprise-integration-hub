@@ -3,6 +3,7 @@
     <log level="custom">
         <property name="event" value="ORDER_PROCESSING_FAILED"/>
         <property name="correlationId" expression="$ctx:CorrelationID"/>
+        <property name="user" expression="$ctx:LogUser"/>
         <property name="errorCode" expression="$ctx:ERROR_CODE"/>
         <property name="errorMessage" expression="$ctx:ERROR_MESSAGE"/>
     </log>

@@ -15,11 +15,25 @@
             <!-- Endpoint Timeout / Connection Refused -->
             <property name="HTTP_SC" value="504" scope="axis2"/>
             <property name="ErrorCategory" value="Gateway Timeout" scope="default"/>
+            <!-- Mask backend details -->
+            <property name="SafeErrorDetail" value="The upstream service did not respond in time." scope="default"/>
         </then>
         <else>
-            <!-- Default Error -->
-            <property name="HTTP_SC" value="500" scope="axis2"/>
-            <property name="ErrorCategory" value="Internal Server Error" scope="default"/>
+            <!-- Check if HTTP_SC is already set (e.g., 400, 401, 403 from our validation sequences) -->
+            <filter xpath="string-length(get-property('axis2', 'HTTP_SC')) > 0">
+                <then>
+                    <!-- Client-side error, safe to pass detail -->
+                    <property name="SafeErrorDetail" expression="$ctx:ERROR_DETAIL" scope="default"/>
+                </then>
+                <else>
+                    <!-- Default to 500 Internal Server Error -->
+                    <property name="HTTP_SC" value="500" scope="axis2"/>
+                    <property name="ErrorCategory" value="Internal Server Error" scope="default"/>
+                    <property name="ERROR_MESSAGE" value="An unexpected error occurred" scope="default"/>
+                    <!-- Mask backend details -->
+                    <property name="SafeErrorDetail" value="Please contact the system administrator with the Correlation-ID." scope="default"/>
+                </else>
+            </filter>
         </else>
     </filter>
 
@@ -31,7 +45,9 @@
                     "code": "$1",
                     "message": "$2",
                     "category": "$3",
-                    "timestamp": "$4"
+                    "detail": "$4",
+                    "timestamp": "$5",
+                    "correlationId": "$6"
                 }
             }
         </format>
@@ -39,9 +55,14 @@
             <arg evaluator="xml" expression="$ctx:ERROR_CODE"/>
             <arg evaluator="xml" expression="$ctx:ERROR_MESSAGE"/>
             <arg evaluator="xml" expression="$ctx:ErrorCategory"/>
+            <arg evaluator="xml" expression="$ctx:SafeErrorDetail"/>
             <arg evaluator="xml" expression="get-property('SYSTEM_TIME')"/>
+            <arg evaluator="xml" expression="$ctx:CorrelationID"/>
         </args>
     </payloadFactory>
+    
+    <!-- Include Security Headers even in faults -->
+    <sequence key="SecureHeadersSeq"/>
     
     <!-- Set Content Type and Respond -->
     <property name="messageType" value="application/json" scope="axis2"/>

@@ -10,11 +10,20 @@
         </else>
     </filter>
     
+    <!-- Extract User from JWT if available -->
+    <property name="LogUser" expression="get-property('JWT_SUB')" scope="default"/>
+    <filter xpath="string-length($ctx:LogUser) = 0">
+        <then>
+            <property name="LogUser" value="anonymous" scope="default"/>
+        </then>
+    </filter>
+
     <!-- Structured JSON Log Output -->
     <!-- In WSO2 MI, log4j2 will be configured to format this into pure JSON -->
     <log level="custom">
         <property name="event" value="API_INVOCATION"/>
         <property name="correlationId" expression="$ctx:CorrelationID"/>
+        <property name="user" expression="$ctx:LogUser"/>
         <property name="apiName" expression="$ctx:SYNAPSE_REST_API"/>
         <property name="method" expression="get-property('axis2', 'HTTP_METHOD')"/>
         <property name="path" expression="get-property('axis2', 'REST_URL_POSTFIX')"/>
