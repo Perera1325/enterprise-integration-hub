@@ -2,6 +2,12 @@
 <api context="/v1/orders" name="OrderProcessingAPI" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="POST" uri-template="/">
         <inSequence>
+            <!-- 0. Security Layer: Authentication & Authorization -->
+            <sequence key="AuthValidationSeq"/>
+            <!-- Require user role for order processing -->
+            <property name="RequiredRole" value="user" scope="default"/>
+            <sequence key="AuthorizeRequestSeq"/>
+
             <!-- 1. Trace Initialization -->
             <sequence key="GlobalLogSequence"/>
             
@@ -59,6 +65,7 @@
             </clone>
         </inSequence>
         <outSequence>
+            <sequence key="SecureHeadersSeq"/>
             <send/>
         </outSequence>
         <faultSequence>

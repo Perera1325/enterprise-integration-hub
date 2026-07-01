@@ -2,6 +2,12 @@
 <api context="/v1/customers" name="CustomerOnboardingAPI" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="POST" uri-template="/">
         <inSequence>
+            <!-- 0. Security Layer: Authentication & Authorization -->
+            <sequence key="AuthValidationSeq"/>
+            <!-- Require admin role for customer onboarding -->
+            <property name="RequiredRole" value="admin" scope="default"/>
+            <sequence key="AuthorizeRequestSeq"/>
+
             <!-- 1. Log incoming request -->
             <sequence key="GlobalLogSequence"/>
             
@@ -40,6 +46,7 @@
             <respond/>
         </inSequence>
         <outSequence>
+            <sequence key="SecureHeadersSeq"/>
             <send/>
         </outSequence>
         <faultSequence>
